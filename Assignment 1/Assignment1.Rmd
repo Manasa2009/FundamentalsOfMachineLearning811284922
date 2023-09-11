@@ -1,0 +1,101 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+***Assignment - 1 Manasa Pullabhatla - 811284922***   
+
+***Data Source - Kaggle***
+*https://www.kaggle.com/datasets/surajjha101/cuisine-rating*
+
+
+#Loading Libraries
+```{r}
+library("ISLR")
+library("caret")
+library("ggplot2")
+library("esquisse")
+```
+##Import the dataset into R \vspace{1mm}
+\newline
+#Loading Data
+```{r}
+res_data <- read.csv("Cuisine_rating.csv")
+```
+
+#Loading the initial few rows of data\vspace{1mm}
+\newline
+```{r}
+head(res_data,n=10)
+
+#Alternatively tail can be used to print the last records in a dataset
+tail(res_data,n=10)
+```
+
+#Print out descriptive statistics for a selection of quantitative and categorical variables.
+```{r}
+str(res_data)
+``` 
+*Structure (str) is commonly used to understand the data types and the count of rows and attributes in a data set.* \vspace{1mm}
+\newline
+
+#Summary of the data
+```{r}
+summary(res_data)
+```
+*Gives a comprehensive understanding of the data, for example - mean, median, 1st quartile, 3rd quartile etc...* \vspace{1mm}
+\newline
+
+#Transform at least one variable
+```{r}
+res_data$Overall.Rating <- as.integer(res_data$Overall.Rating)
+
+is.integer(res_data$Overall.Rating)
+```
+*The category "overall rating" was previously in the form of double (decimal) which then converted into a integer (whole number). At the end we verified the conversion is right by using is.integer function as we got the result as TRUE, it is confirmed that the conversion has been done.* \vspace{1mm}
+\newline
+
+#Plot scatterplot\vspace{1mm}
+\newline
+
+#In order to plot a scatter plot we are using the default cars dataset because this can be used to explain the relationship between speed and distance in a efficient way
+```{r}
+scat_data <- cars
+```
+
+#Plot
+```{r}
+plot(scat_data$speed, scat_data$dist,main="Speed vs Distance",xlab="Speed",ylab="Distance")
+```
+*If a car travels at higher speed it is going to cover more distance for example when the car is travelling at 20 - 25 miles an hour the distance covered is significantly higher, else wise when we check the distance covered when the car is travelling at 5 miles an hour it is very less.* \vspace{1mm}
+\newline
+
+
+#Plot Quantitative Variable
+```{r}
+#esquisser() #Package used to build the plot
+ggplot(res_data) +
+  aes(x = Gender) +
+  geom_bar(fill = "#FF8C00") +
+  labs(
+    x = "Gender",
+    y = "Count",
+    title = "Restaurant Visitors by Gender"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold",
+    hjust = 0.5),
+    axis.title.y = element_text(size = 10L,
+    face = "bold"),
+    axis.title.x = element_text(size = 10L,
+    face = "bold")
+  )
+```
+#Table
+```{r}
+table(res_data$Gender)
+```
+*From the above bar graph and table, we can conclude that male prefer visiting restaurants in higher volumes when compared to that with the females.*
+
