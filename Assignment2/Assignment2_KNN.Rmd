@@ -1,0 +1,214 @@
+---
+title: "Assignment 2 - KNN Manasa Pullabhatla"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+#Summary
+## 1. Age = 40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, Education_1 = 0, Education_2 = 1, Education_3 = 0, Mortgage = 0, Securities Account = 0, CD Account = 0, Online = 1, and Credit Card = 1. Perform a k-NN classification with all predictors except ID and ZIP code using k = 1. Remember to transform categorical predictors with more than two categories into dummy variables first. Specify the success class as 1 (loan acceptance), and use the default cutoff value of 0.5. How would this customer be classified?
+
+##Interpretation - The customer is categorized as 0 when k=1, which denotes that the loan is not accepted. Due to the fact that factor 1 is recognized as loan acceptance while factor 0 is not.
+
+##2 What is a choice of k that balances between overfitting and ignoring the predictor information?
+
+#Interpretation - K value in a way that avoids both overfitting and neglecting the predictor information is 1, K=1
+
+##3  Show the confusion matrix for the validation data that results from using the best k.
+
+#Interpretation - Kindly look at the below output for Question 3
+
+##4  Consider the following customer: Age = 40, Experience = 10, Income = 84,
+#Interpretation - Family = 2, CCAvg = 2, Education_1 = 0, Education_2 = 1, Education_3 = 0,Mortgage = 0, Securities Account = 0, CD Account = 0, Online = 1 and CreditCard = 1. Classify the customer using the best k.
+
+##Interpretation - By selecting the best k, the consumer is given the classification of 0, which denotes that the loan is rejected.
+
+##5 . Repartition the data, this time into training, validation, and test sets (50% : 30% : 20%). Apply the k-NN method with the k chosen above. Compare the confusion matrix of the test set with that of the training and validation sets. Comment on the differences and their reason.
+
+##Interpretation - We will not take training into account when comparing the test with training and validation because a model will typically produce 100% accuracy when it has the observed data.By comparing the Test data to the Validation data, we can see that the Test data has less errors, more accuracy, and better sensitivity, indicating that the model performs well on the data that is not known.
+```{r}
+data1 <- read.csv("C:/Users/Sailaja/Desktop/UniversalBank.csv")
+str(data1)
+
+library("ISLR")
+library("caret")
+library("class")
+library("ggplot2")
+library("gmodels")
+```
+#Data cleaning
+```{r}
+data1 <- data1[,c(-1,-5)]
+head(data1, n=5)
+
+test.na <- is.na.data.frame("data1")
+
+#Converting data types of attributes
+data1$Education <- as.character(data1$Education)
+data1$Personal.Loan <- as.factor(data1$Personal.Loan)
+#is.character(data1$Personal.loan)
+
+#Dumming Variable
+
+DummyVariables <- dummyVars(~Education, data1)
+data2 <- predict(DummyVariables,data1)
+
+##Combining Data
+data3 <- data1[,-6]
+data4 <- cbind(data3, data2)
+colnames(data4)
+```
+#Data Partition and Normalization
+
+```{r}
+set.seed(123)
+Data_Part_Train <- createDataPartition(data4$Personal.Loan, p=0.6, list=F)
+Train_Data <- data4[Data_Part_Train,]
+Validation_Data <- data4[-Data_Part_Train,]
+
+#Normalizing the training dataset
+Model_Z_Normalized <- preProcess(Train_Data[,-c(7,12:14)], method=c("center","scale"))
+
+Normalized_Data_Train <- predict(Model_Z_Normalized, Train_Data)
+
+Normalized_Data_Validation <- predict(Model_Z_Normalized, Validation_Data)
+
+#summary(Normalized_Data_Train)
+#summary(Normalized_Data_Validation)
+```
+
+#Inserting a test set and normalizing it
+```{r}
+test_data <- cbind.data.frame(Age = 40,Experience = 10, Income = 84,Family = 2, 
+                        CCAvg =2, Mortgage = 0, Securities.Account = 0, 
+                        CD.Account =0, Online =1, CreditCard = 1, 
+                        Education1 = 0, Education2 = 1, Education3 = 0)
+
+Test_Normalized <- predict(Model_Z_Normalized, test_data)
+```
+
+#1 Running the Knn model on the test dataset with k=1
+
+```{r}
+Train_Predictors <- Normalized_Data_Train[,-7]
+Validaion_Predictors <- Normalized_Data_Validation[,-7]
+
+Train_Labels <- Normalized_Data_Train[,7]
+Validation_Labels <- Normalized_Data_Validation[,7]
+
+Predicted_K <- knn(Train_Predictors, Test_Normalized, cl=Train_Labels, k=1)
+
+head(Predicted_K)
+```
+The customer is categorized as 0 when k=1, which denotes that the loan is not accepted. Due to the fact that factor 1 is recognized as loan acceptance while factor 0 is not.
+
+#2 Selecting k in a way that avoids both overfitting and neglecting the predictor information
+```{r}
+set.seed(455)
+search_grid <- expand.grid(k=c(1:30))
+#trtcontrol <- trainControl(method="repeatedcv")
+model <- train(Personal.Loan~Age+Experience+Income+Family+CCAvg+Mortgage+Securities.Account+CD.Account+Online+CreditCard+Education1+Education2+Education3, data=Normalized_Data_Train, method="knn", tuneGrid = search_grid)
+model
+best_k <- model$bestTune[[1]]
+best_k
+```
+K value in a way that avoids both overfitting and neglecting the predictor information is 1, K=1
+
+#Plotting Model
+```{r}
+plot(model)
+```
+#3 confusion matrix being applied to the validation data
+```{r}
+pred_training <- predict(model,Normalized_Data_Validation[,-7])
+confusionMatrix(pred_training, Validation_Labels)
+```
+#4 Running the test data with best k choosen above
+
+```{r}
+test_best_k <- knn(Train_Predictors, Test_Normalized, cl=Train_Labels, k=best_k)
+head(test_best_k)
+```
+##By selecting the best k, the consumer is given the classification of 0, which denotes that the loan is rejected.
+
+35
+
+#5.Repartitioning the data into training(60%), validation(20%) and test(20%) and running the entire model with best k
+
+```{r}
+set.seed(422)
+data_part <- createDataPartition(data4$Personal.Loan, p=0.6, list = F)
+n_train_data <- data4[data_part,]
+nd_test_data <- data4[-data_part,]
+
+data_part_v <- createDataPartition(nd_test_data$Personal.Loan,p=0.5, list =F)
+n_validate_data <- nd_test_data[data_part_v,]
+n_test_data <- nd_test_data[-data_part_v,]
+
+#Normalization
+norm_m <- preProcess(n_train_data[,-c(7,12:14)],method=c("center","scale"))
+
+train_z <- predict(norm_m, n_train_data)
+validate_z <- predict(norm_m, n_validate_data)
+test_z <- predict(norm_m, n_test_data)
+
+#Defining the predictors and labels
+n_train_predictor <- train_z[,-7]
+n_validate_predictor <- validate_z[,-7]
+n_test_predictor <- test_z[,-7]
+
+n_train_labels <- train_z[,7]
+n_validate_labels <- validate_z[,7]
+n_test_labels <- test_z[,7]
+
+#running the knn model over train dataset
+n_model <- knn(n_train_predictor,n_train_predictor,cl=n_train_labels,k=best_k)
+head(n_model)
+
+#running the knn model over validation dataset
+n_model1 <- knn(n_train_predictor,n_validate_predictor,cl=n_train_labels,k=best_k)
+
+head(n_model1)
+
+#running the knn model over test dataset
+n_model2 <- knn(n_train_predictor,n_test_predictor,cl=n_train_labels,k=best_k)
+head(n_model2)
+```
+#Using CrossTable to compare the Test vs Training and Validation
+```{r}
+confusionMatrix(n_model,n_train_labels)
+```
+#Train_Data -
+Miscalculations = 0
+Accuracy = 1
+Sensitivity = 1
+#This is due to the fact that the train and test datasets are identical, yielding 100% Accuracy and 0 Miscalculations.
+
+```{r}
+confusionMatrix(n_model1,n_validate_labels)
+```
+#Validation data
+Miscalculations = 44+11 = 55
+Accuracy= 0.945
+Sensitivity=0.9878
+
+```{r}
+confusionMatrix(n_model2,n_test_labels)
+```
+#Test_Data -
+Miscalculations 10+27 = 37
+Accuracy =0.963
+Sensitivity =0.9889
+
+#Interpretation We will not take training into account when comparing the test with training and validation because a model will typically produce 100% accuracy when it has the observed data.
+
+Miscalculations:
+Validation - 55, Test - 37 
+
+Accuracy:
+Validation - 0.945, Test -0.963
+
+Sensitivity:
+Validation - 0.9878, Test - 0.9889
+
+#By comparing the Test data to the Validation data, we can see that the Test data has less errors, more accuracy, and better sensitivity, indicating that the model performs well on the data that is not known.
