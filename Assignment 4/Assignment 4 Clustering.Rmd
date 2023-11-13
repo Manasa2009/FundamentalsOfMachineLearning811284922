@@ -1,0 +1,158 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+Assignment 4 Clustering, Manasa Pullabhatla, 811284922
+
+#Note - We have used to 2 methods (WSS and Silhouette ) to  find the optimal K solutions but at the end we have used Silhouette to interpret the clusters.
+#Activating required Libraries 
+
+#Summary
+#1.
+#Among the five clusters, Cluster 5 stands out as the most promising. It represents a pharmaceutical industry leader with a massive market capitalization, stable stock performance, and robust financial metrics. Notably, a low beta suggests consistent stock price behavior, while the PE ratio signifies fair stock valuation. Cluster 5 excels with an exceptional 43.10% ROE, demonstrating efficient profitability, and an impressive 17.75% ROA highlights outstanding asset efficiency. The high asset turnover underscores superb asset utilization, and the low leverage ratio indicates a conservative financial structure, reducing financial risk. In summary, Cluster 5 is the best-performing cluster due to its dominant industry position, financial excellence, and stability, making it an attractive investment choice.
+
+#2
+#All clusters share a common presence of "Hold" and "Moderate Buy" Median Recommendations. However, Cluster 4 distinguishes itself with a diverse mix of all Median Recommendations, offering well-rounded preparedness for future uncertainties, with a prominent emphasis on "Hold" recommendations.Additionally, in the silhouette analysis, it's evident that companies headquartered in the United States dominate all clusters. Cluster 4, in particular, stands out for having a higher proportion of US-based companies, reinforcing its alignment with the industry. The presence of NYSE-listed firms is consistent across most clusters, while Cluster 3 deviates with a blend of AMEX and NASDAQ listings. Cluster 4, recognized for its financial efficiency, comprises solely NYSE-listed companies, highlighting its robust financial performance within the industry.
+
+
+#3 
+#Cluster 1 - Moderate Market Cap & Stable Efficiency Cluster
+#Cluster 2 - High Market Cap & Stable Performance Cluster
+#Cluster 3 - Mid-Sized Firm with Efficient Profitability & Elevated Risk
+#Cluster 4 - Stalwart Performer & Efficient Operator
+#Cluster 5 - Industry Leader & Financial Excellence
+
+```{r}
+library("tidyverse")
+library("factoextra")
+library("ggplot2")
+library("dplyr")
+```
+
+#Loading Data
+
+```{r}
+data.df <- read.csv("C:/Users/prana/OneDrive/Documents/FML/Pharmaceuticals.csv")
+```
+
+#Selecting the numerical variables from column 1 to 9
+
+```{r}
+numeric_data <- data.df[, c(3:11)]
+```
+
+#Standardizing the data
+
+```{r}
+scaled_data <- scale(numeric_data)
+```
+
+#Normalization and finding the optimal k
+
+```{r}
+wss <- fviz_nbclust(scaled_data,kmeans,method="wss")
+wss
+```
+```{r}
+silhouette <- fviz_nbclust(scaled_data,kmeans,method="silhouette")
+silhouette
+```
+#Thus, k = 2 is the optimal k obtained by the wss approach, while k = 5 is the best k obtained by the silhouette method.
+
+#Formulation of clusters using K-Means with k = 2 (WSS)
+
+```{r}
+wss_kmeans <- kmeans(scaled_data,centers = 2,nstart=50)
+wss_kmeans
+```
+#Formulation of clusters using K-Means with k = 5 (Silhouette)
+
+```{r}
+silhouette_kmeans <- kmeans(scaled_data,centers=5,nstart=50)
+silhouette_kmeans
+```
+#Cluster Plot (WSS)
+
+```{r}
+fviz_cluster(wss_kmeans,scaled_data[,-c(1:2,12:15)],main="Cluster_WSS")
+```
+#Cluster Plot (Silhouette)
+
+```{r}
+fviz_cluster(silhouette_kmeans,scaled_data[,-c(1:2,12:15)],main="Cluster_Silhouette")
+```
+#Appending the cluster assignments as a new column to the original data frame for further analysis.
+
+```{r}
+clusters_wss <- wss_kmeans$cluster
+clusters_silhouette <- silhouette_kmeans$cluster
+
+data_set1 <- cbind(data.df,clusters_wss)
+data_set2 <- cbind(data.df,clusters_silhouette)
+```
+
+#Summarizing the clusters to gain insights into their characteristics by examining the within-cluster sum of squares (WSS).
+
+```{r}
+int_wss <- aggregate(data_set1[,-c(1:2,12:14)],by=list(data_set1$clusters_wss),FUN="median")
+print(int_wss[,-1])
+```
+
+#Interpretation
+
+#The pharmaceutical firm in Cluster 1 has a substantial market capitalization of $73 billion, indicating it is a major industry player. With a low beta of 0.460, the firm's stock is relatively stable. A moderate PE ratio of 21.50 suggests fair stock valuation. Strong ROE (31.0%) and ROA (15.0%) signify efficient use of equity and asset profitability. The firm maintains a healthy asset turnover (0.8) and low leverage (0.280), indicating a balanced financial structure.
+
+#Cluster 2 represents a mid-sized pharmaceutical firm with a market capitalization of $4.78 billion and moderate financial metrics. The firm's beta of 0.555 suggests moderate stock price stability. A PE ratio of 23.35 indicates a relatively higher stock valuation. While it maintains reasonable profitability with a 14.2% ROE, the ROA at 5.6% signifies moderate asset efficiency. The firm holds a balanced mix of assets and debt with a leverage ratio of 0.475. Further context and industry comparisons are needed to assess its competitive position and growth potential.
+
+#Summarizing the clusters to gain insights into their characteristics by examining the within-cluster sum of squares (Silhouette)
+
+```{r}
+int_silhouette <- aggregate(data_set2[,-c(1:2,12:14)],by=list(data_set2$clusters_silhouette),FUN="median")
+print(int_silhouette[,-1])
+```
+#Interpretation
+
+#High Market Cap & Stable Performance Cluster
+#This pharmaceutical firm in Cluster 1 is a major industry player with a substantial market capitalization and a stable stock. However, the relatively high PE ratio may suggest that investors have high expectations for future growth. It maintains reasonable profitability and asset efficiency. The moderate leverage signifies a balanced financial structure. A comprehensive analysis should consider industry benchmarks and qualitative factors to assess its competitive positioning and growth potential thoroughly.
+
+#Mid-Sized Firm with Efficient Profitability & Elevated Risk
+#This pharmaceutical firm in Cluster 2 is a mid-sized player in the industry with a strong ROE, demonstrating efficient profitability. However, the high beta suggests increased stock price volatility, and the elevated leverage indicates a notable dependence on debt. The stock valuation is moderate, and the asset turnover is reasonable. A thorough analysis should consider industry benchmarks and qualitative factors to assess its competitive positioning and growth prospects comprehensively.
+
+#"Moderate Market Cap & Stable Efficiency Cluster."
+#Cluster 3 represents a moderate-sized pharmaceutical firm with a market capitalization of $2.230 billion and relatively stable financial metrics. The firm's beta value of 0.535 indicates moderate stock price volatility, while a PE ratio of 19.25 suggests a fair stock valuation. It maintains decent profitability with a 13.15% ROE and a 6.10% ROA, although its asset turnover of 0.40 indicates room for improved efficiency in generating revenue from assets. The firm has a higher leverage ratio of 0.635, signifying a notable reliance on debt in its financial structure. A more comprehensive assessment would require industry context and qualitative analysis to gauge its competitive positioning and growth prospects.
+
+#Industry Leader & Financial Excellence
+#Cluster 4 represents a pharmaceutical industry powerhouse with an enormous market capitalization of $153.245 billion and stable stock performance. The low beta value of 0.460 indicates consistent stock price behavior. A PE ratio of 21.25 suggests fair stock valuation. The firm excels with a robust 43.10% ROE, highlighting efficient profitability relative to equity, and an impressive 17.75% ROA demonstrates excellent asset efficiency. A high asset turnover of 0.95 signifies superb asset utilization, while the low leverage at 0.220 points to a conservative debt structure. This cluster represents a leading industry player with exceptional financial performance and stability.
+
+#Stalwart Performer & Efficient Operator
+#Cluster 5 represents a significant pharmaceutical firm with a market capitalization of $59.480 billion and a stable stock performance. The low beta value of 0.480 indicates reduced stock price volatility. The PE ratio of 21.10 suggests a reasonable stock valuation. With a robust 26.90% ROE, the firm exhibits highly efficient profitability relative to equity. A 13.35% ROA demonstrates the ability to generate substantial profits from assets, and an asset turnover of 0.75 signifies effective asset utilization. The moderate leverage at 0.345 indicates a balanced mix of debt in the firm's financial structure. This cluster suggests a well-established player in the industry with efficient operations and profitability.
+
+
+#Q1 
+#Summary - Among the five clusters, Cluster 4 stands out as the most promising. It represents a pharmaceutical industry leader with a massive market capitalization, stable stock performance, and robust financial metrics. Notably, a low beta suggests consistent stock price behavior, while the PE ratio signifies fair stock valuation. Cluster 4 excels with an exceptional 43.10% ROE, demonstrating efficient profitability, and an impressive 17.75% ROA highlights outstanding asset efficiency. The high asset turnover underscores superb asset utilization, and the low leverage ratio indicates a conservative financial structure, reducing financial risk. In summary, Cluster 4 is the best-performing cluster due to its dominant industry position, financial excellence, and stability, making it an attractive investment choice.
+
+#Q2
+#Pattern in the categorical variables
+
+#Median Recommendation
+```{r}
+ggplot(data_set2,aes(x=clusters_silhouette,fill=Median_Recommendation)) + geom_bar()
+```
+#In general, all clusters feature companies with "Hold" and "Moderate Buy" Median Recommendations. However, what sets Cluster 4 apart is its diverse mix of all Median Recommendations, providing a well-rounded balance to navigate future uncertainties. Additionally, Cluster 4 prominently includes companies with a "Hold" Median Recommendation, emphasizing its capacity to handle potential uncertainties effectively.
+
+#Location
+
+```{r}
+ggplot(data_set2,aes(x=clusters_silhouette,fill=Location)) + geom_bar()
+```
+
+#In the silhouette clusters, a consistent pattern emerges in terms of location. In each cluster, there is a higher prevalence of companies headquartered in the United States compared to other locations. However, what makes Cluster 4 particularly intriguing is that it has a higher proportion of US-based companies and a lower proportion of non-US-based companies, making it the cluster that most accurately represents the domain or industry in a meaningful way.
+
+#Exchange
+
+```{r}
+ggplot(data_set2,aes(x=clusters_silhouette,fill=Exchange)) + geom_bar()
+```
+#NYSE Exchange seems to be a game changer, as we can see majorly all the clusters are solely NYSE based firms unlike Cluster 3 where there is a mix of AMEX and NASDAQ. Cluster 4 which we deem to be performant efficient in terms of financial aspects has firms in it which are solely NYSE based.
+
